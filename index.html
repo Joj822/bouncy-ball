@@ -60,7 +60,7 @@ let ball = {
   vy: (Math.random() - 0.5) * 20,
   r: 8,
   baseR: 8,
-  targetR: 50, // Start with a bigger target
+  targetR: 50,
   rTransitionSpeed: 0.01,
   hue: Math.random() * 360
 };
@@ -164,16 +164,13 @@ function startAudio() {
 
 startBtn.addEventListener("click", startAudio);
 
-// Change ball size target - now can get REALLY BIG!
+// Change ball size target
 function changeSize() {
-  ball.targetR = 5 + Math.random() * 95; // Size between 5 and 100! (Can fill a lot of the box)
+  ball.targetR = 5 + Math.random() * 95;
   console.log("New target size:", ball.targetR);
 }
 
-// Initial size change
 changeSize();
-
-// Change size every 5 seconds
 setInterval(changeSize, 5000);
 
 function drawBorder() {
@@ -182,13 +179,64 @@ function drawBorder() {
   ctx.strokeRect(box.x, box.y, box.w, box.h);
 }
 
+function drawLikeIcon(x, y, size) {
+  ctx.save();
+  ctx.fillStyle = "white";
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
+  
+  // Thumbs up icon
+  ctx.beginPath();
+  // Thumb part
+  ctx.moveTo(x, y + size * 0.3);
+  ctx.lineTo(x + size * 0.3, y);
+  ctx.lineTo(x + size * 0.5, y);
+  ctx.lineTo(x + size * 0.5, y + size * 0.5);
+  // Hand part
+  ctx.lineTo(x + size, y + size * 0.5);
+  ctx.lineTo(x + size, y + size);
+  ctx.lineTo(x, y + size);
+  ctx.closePath();
+  ctx.fill();
+  
+  ctx.restore();
+}
+
+function drawSubscribeIcon(x, y, size) {
+  ctx.save();
+  ctx.fillStyle = "red";
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
+  
+  // YouTube-style subscribe button
+  ctx.fillRect(x, y, size * 2, size);
+  
+  // Play triangle
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.moveTo(x + size * 0.6, y + size * 0.3);
+  ctx.lineTo(x + size * 1.3, y + size * 0.5);
+  ctx.lineTo(x + size * 0.6, y + size * 0.7);
+  ctx.closePath();
+  ctx.fill();
+  
+  ctx.restore();
+}
+
 function drawText() {
   ctx.fillStyle = "white";
   ctx.textAlign = "center";
   ctx.font = "bold 44px sans-serif";
   ctx.fillText("STAY HERE", canvas.width / 2, 60);
+  
   ctx.font = "28px sans-serif";
   ctx.fillText("TO RELIVE ANXIETY", canvas.width / 2, 100);
+  
+  // Draw like icon on the left
+  drawLikeIcon(50, 35, 30);
+  
+  // Draw subscribe button on the right
+  drawSubscribeIcon(canvas.width - 130, 40, 25);
 }
 
 function loop() {
