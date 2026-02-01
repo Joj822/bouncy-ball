@@ -61,7 +61,7 @@ let ball = {
   r: 8,
   baseR: 8,
   targetR: 8,
-  rTransitionSpeed: 0.0002, // Very slow size change
+  rTransitionSpeed: 0.001, // Increased from 0.0002 - now 5x faster
   hue: Math.random() * 360
 };
 
@@ -164,10 +164,10 @@ function startAudio() {
 
 startBtn.addEventListener("click", startAudio);
 
-// Slowly change ball size target
+// Slowly change ball size target - now more frequent and bigger range
 setInterval(() => {
-  ball.targetR = 6 + Math.random() * 16; // Random size between 6 and 22
-}, 15000); // Change target every 15 seconds
+  ball.targetR = 5 + Math.random() * 25; // Random size between 5 and 30 (bigger range!)
+}, 8000); // Change target every 8 seconds (was 15)
 
 function drawBorder() {
   ctx.strokeStyle = "white";
