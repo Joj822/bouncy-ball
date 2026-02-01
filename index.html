@@ -61,9 +61,14 @@ let ball = {
   r: 8,
   baseR: 8,
   targetR: 8,
-  rTransitionSpeed: 0.001, // Increased from 0.0002 - now 5x faster
+  rTransitionSpeed: 0.005, // Increased from 0.001 to 0.005 (5x faster!)
   hue: Math.random() * 360
 };
+
+// Background color shift (very slow)
+let bgHue = 0;
+let bgSaturation = 15; // Low saturation for subtlety
+let bgLightness = 5;   // Very dark
 
 // Gravity
 let gravityAngle = Math.random() * Math.PI * 2;
@@ -164,10 +169,10 @@ function startAudio() {
 
 startBtn.addEventListener("click", startAudio);
 
-// Slowly change ball size target - now more frequent and bigger range
+// Slowly change ball size target - even more frequent
 setInterval(() => {
-  ball.targetR = 5 + Math.random() * 25; // Random size between 5 and 30 (bigger range!)
-}, 8000); // Change target every 8 seconds (was 15)
+  ball.targetR = 5 + Math.random() * 30; // Size between 5 and 35 (even bigger range!)
+}, 5000); // Change target every 5 seconds (was 8)
 
 function drawBorder() {
   ctx.strokeStyle = "white";
@@ -188,11 +193,19 @@ function loop() {
   requestAnimationFrame(loop);
   time += 0.01;
   
+  // Very slow background color shift
+  bgHue += 0.05; // Extremely slow hue rotation (takes ~2 minutes for full cycle)
+  if (bgHue >= 360) bgHue = 0;
+  
   // Slowly interpolate ball size toward target
   ball.r += (ball.targetR - ball.r) * ball.rTransitionSpeed;
   
-  // Soft trail fade
-  ctx.fillStyle = "rgba(0,0,0,0.20)";
+  // Draw background with slowly changing color
+  ctx.fillStyle = `hsl(${bgHue}, ${bgSaturation}%, ${bgLightness}%)`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Soft trail fade (now with slight transparency to blend with background)
+  ctx.fillStyle = `hsla(${bgHue}, ${bgSaturation}%, ${bgLightness}%, 0.20)`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
   // Gravity pulses + rotates
