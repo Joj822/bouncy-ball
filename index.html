@@ -60,15 +60,15 @@ let ball = {
   vy: (Math.random() - 0.5) * 20,
   r: 8,
   baseR: 8,
-  targetR: 8,
-  rTransitionSpeed: 0.005, // Increased from 0.001 to 0.005 (5x faster!)
+  targetR: 50, // Start with a bigger target
+  rTransitionSpeed: 0.01,
   hue: Math.random() * 360
 };
 
 // Background color shift (very slow)
 let bgHue = 0;
-let bgSaturation = 15; // Low saturation for subtlety
-let bgLightness = 5;   // Very dark
+let bgSaturation = 15;
+let bgLightness = 5;
 
 // Gravity
 let gravityAngle = Math.random() * Math.PI * 2;
@@ -103,7 +103,6 @@ function playMelody() {
   const now = audioCtx.currentTime;
   
   // Calming pentatonic scale melody (C major pentatonic)
-  // Notes: C, D, E, G, A
   const notes = [
     { freq: 261.63, duration: 2 },    // C4
     { freq: 293.66, duration: 1.5 },  // D4
@@ -122,15 +121,13 @@ function playMelody() {
     timeOffset += note.duration;
   });
   
-  // Schedule next melody with some silence in between
   setTimeout(() => {
     if (audioStarted) playMelody();
-  }, (timeOffset + 3) * 1000); // 3 second pause between melodies
+  }, (timeOffset + 3) * 1000);
 }
 
 function playBackgroundChord() {
-  // Soft background chord that plays continuously
-  const chordFreqs = [130.81, 164.81, 196.00]; // C3, E3, G3
+  const chordFreqs = [130.81, 164.81, 196.00];
   
   chordFreqs.forEach(freq => {
     const osc = audioCtx.createOscillator();
@@ -158,10 +155,8 @@ function startAudio() {
   masterGain.gain.value = 1;
   masterGain.connect(audioCtx.destination);
   
-  // Start background ambience
   playBackgroundChord();
   
-  // Start melody after a brief moment
   setTimeout(() => {
     playMelody();
   }, 2000);
@@ -169,10 +164,17 @@ function startAudio() {
 
 startBtn.addEventListener("click", startAudio);
 
-// Slowly change ball size target - even more frequent
-setInterval(() => {
-  ball.targetR = 5 + Math.random() * 30; // Size between 5 and 35 (even bigger range!)
-}, 5000); // Change target every 5 seconds (was 8)
+// Change ball size target - now can get REALLY BIG!
+function changeSize() {
+  ball.targetR = 5 + Math.random() * 95; // Size between 5 and 100! (Can fill a lot of the box)
+  console.log("New target size:", ball.targetR);
+}
+
+// Initial size change
+changeSize();
+
+// Change size every 5 seconds
+setInterval(changeSize, 5000);
 
 function drawBorder() {
   ctx.strokeStyle = "white";
@@ -194,17 +196,17 @@ function loop() {
   time += 0.01;
   
   // Very slow background color shift
-  bgHue += 0.05; // Extremely slow hue rotation (takes ~2 minutes for full cycle)
+  bgHue += 0.05;
   if (bgHue >= 360) bgHue = 0;
   
-  // Slowly interpolate ball size toward target
+  // Interpolate ball size toward target
   ball.r += (ball.targetR - ball.r) * ball.rTransitionSpeed;
   
   // Draw background with slowly changing color
   ctx.fillStyle = `hsl(${bgHue}, ${bgSaturation}%, ${bgLightness}%)`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
-  // Soft trail fade (now with slight transparency to blend with background)
+  // Soft trail fade
   ctx.fillStyle = `hsla(${bgHue}, ${bgSaturation}%, ${bgLightness}%, 0.20)`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
