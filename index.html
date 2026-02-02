@@ -44,12 +44,12 @@ const startBtn = document.getElementById("startBtn");
 canvas.width = 720;
 canvas.height = 1280;
 
-// Box
+// Box - Extended down
 const box = {
   x: 40,
   y: 140,
   w: canvas.width - 80,
-  h: canvas.height - 280
+  h: canvas.height - 200 // Changed from 280 to 200 to extend box down
 };
 
 // Ball with size variation
@@ -63,7 +63,7 @@ let ball = {
   targetR: 50,
   rTransitionSpeed: 0.01,
   hue: Math.random() * 360,
-  lastCollisionTime: 0 // Track last collision to prevent rapid color changes
+  lastCollisionTime: 0
 };
 
 // Background color shift (very slow)
@@ -71,17 +71,19 @@ let bgHue = 0;
 let bgSaturation = 15;
 let bgLightness = 5;
 
-// Gravity
+// Gravity - MUCH WEAKER
 let gravityAngle = Math.random() * Math.PI * 2;
-let gravityStrength = 0.35;
+let gravityStrength = 0.08;
 let time = 0;
 
 // Load icons
 const likeIcon = new Image();
 likeIcon.src = "https://cdn-icons-png.flaticon.com/512/126/126473.png";
+likeIcon.crossOrigin = "anonymous";
 
 const subscribeIcon = new Image();
 subscribeIcon.src = "https://cdn-icons-png.flaticon.com/512/1384/1384060.png";
+subscribeIcon.crossOrigin = "anonymous";
 
 // 🎵 Calming melodic audio
 let audioStarted = false;
@@ -200,11 +202,26 @@ function drawText() {
   // Draw title
   ctx.fillText(titleText, titleX, titleY);
   
-  // Draw like icon to the left of title
+  // Draw like icon to the left of title (with filter to make it white)
   if (likeIcon.complete) {
     ctx.save();
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(likeIcon, titleX - titleWidth/2 - 50, titleY - 35, 35, 35);
+    
+    // Create a temporary canvas to apply filter
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 35;
+    tempCanvas.height = 35;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    // Draw image
+    tempCtx.drawImage(likeIcon, 0, 0, 35, 35);
+    
+    // Apply white filter by using composite operations
+    tempCtx.globalCompositeOperation = 'source-in';
+    tempCtx.fillStyle = 'white';
+    tempCtx.fillRect(0, 0, 35, 35);
+    
+    // Draw the filtered image
+    ctx.drawImage(tempCanvas, titleX - titleWidth/2 - 50, titleY - 35);
     ctx.restore();
   }
   
@@ -219,9 +236,9 @@ function drawText() {
 }
 
 function handleCollision() {
-  // Only change color if enough time has passed since last collision (prevents rapid flickering)
+  // Only change color if enough time has passed since last collision
   const now = Date.now();
-  if (now - ball.lastCollisionTime > 100) { // 100ms cooldown
+  if (now - ball.lastCollisionTime > 100) {
     ball.hue += 40;
     ball.lastCollisionTime = now;
   }
@@ -246,9 +263,9 @@ function loop() {
   ctx.fillStyle = `hsla(${bgHue}, ${bgSaturation}%, ${bgLightness}%, 0.20)`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
-  // Gravity pulses + rotates
-  gravityAngle += Math.sin(time * 0.7) * 0.01;
-  gravityStrength = 0.3 + Math.sin(time * 0.9) * 0.15;
+  // Gravity pulses + rotates - MUCH GENTLER
+  gravityAngle += Math.sin(time * 0.7) * 0.005;
+  gravityStrength = 0.08 + Math.sin(time * 0.9) * 0.04;
   const gx = Math.cos(gravityAngle) * gravityStrength;
   const gy = Math.sin(gravityAngle) * gravityStrength;
   ball.vx += gx;
@@ -261,22 +278,22 @@ function loop() {
   
   if (ball.x - ball.r < box.x) {
     ball.x = box.x + ball.r;
-    ball.vx *= -0.85; // More damping to prevent getting stuck
+    ball.vx *= -0.92;
     collided = true;
   }
   if (ball.x + ball.r > box.x + box.w) {
     ball.x = box.x + box.w - ball.r;
-    ball.vx *= -0.85;
+    ball.vx *= -0.92;
     collided = true;
   }
   if (ball.y - ball.r < box.y) {
     ball.y = box.y + ball.r;
-    ball.vy *= -0.85;
+    ball.vy *= -0.92;
     collided = true;
   }
   if (ball.y + ball.r > box.y + box.h) {
     ball.y = box.y + box.h - ball.r;
-    ball.vy *= -0.85;
+    ball.vy *= -0.92;
     collided = true;
   }
   
@@ -284,23 +301,23 @@ function loop() {
     handleCollision();
   }
   
-  // Apply air resistance to prevent runaway speeds
-  ball.vx *= 0.998;
-  ball.vy *= 0.998;
+  // Light air resistance
+  ball.vx *= 0.999;
+  ball.vy *= 0.999;
   
-  // Gentle speed creep (reduced)
-  ball.vx *= 1.0005; // Reduced from 1.001
-  ball.vy *= 1.0005;
+  // Very gentle speed creep
+  ball.vx *= 1.0003;
+  ball.vy *= 1.0003;
   
-  // Tighter speed limits
-  ball.vx = Math.max(-20, Math.min(20, ball.vx));
-  ball.vy = Math.max(-20, Math.min(20, ball.vy));
+  // Speed limits
+  ball.vx = Math.max(-18, Math.min(18, ball.vx));
+  ball.vy = Math.max(-18, Math.min(18, ball.vy));
   
-  // If ball gets too slow, give it a little nudge to keep it interesting
+  // If ball gets too slow, give it a nudge
   const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-  if (speed < 2) {
-    ball.vx += (Math.random() - 0.5) * 4;
-    ball.vy += (Math.random() - 0.5) * 4;
+  if (speed < 3) {
+    ball.vx += (Math.random() - 0.5) * 3;
+    ball.vy += (Math.random() - 0.5) * 3;
   }
   
   // Glow
