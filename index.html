@@ -30,27 +30,10 @@
     #startBtn:hover {
       background: white;
     }
-    .icon {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      filter: brightness(0) invert(1);
-    }
-    #likeIcon {
-      top: 30px;
-      left: 30px;
-    }
-    #subscribeIcon {
-      top: 30px;
-      right: 30px;
-      filter: none;
-    }
   </style>
 </head>
 <body>
 <button id="startBtn">START</button>
-<img id="likeIcon" class="icon" src="https://cdn-icons-png.flaticon.com/512/126/126473.png" alt="Like">
-<img id="subscribeIcon" class="icon" src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="Subscribe">
 <canvas id="c"></canvas>
 <script>
 const canvas = document.getElementById("c");
@@ -79,7 +62,8 @@ let ball = {
   baseR: 8,
   targetR: 50,
   rTransitionSpeed: 0.01,
-  hue: Math.random() * 360
+  hue: Math.random() * 360,
+  lastCollisionTime: 0 // Track last collision to prevent rapid color changes
 };
 
 // Background color shift (very slow)
@@ -91,6 +75,13 @@ let bgLightness = 5;
 let gravityAngle = Math.random() * Math.PI * 2;
 let gravityStrength = 0.35;
 let time = 0;
+
+// Load icons
+const likeIcon = new Image();
+likeIcon.src = "https://cdn-icons-png.flaticon.com/512/126/126473.png";
+
+const subscribeIcon = new Image();
+subscribeIcon.src = "https://cdn-icons-png.flaticon.com/512/1384/1384060.png";
 
 // 🎵 Calming melodic audio
 let audioStarted = false;
@@ -184,7 +175,6 @@ startBtn.addEventListener("click", startAudio);
 // Change ball size target
 function changeSize() {
   ball.targetR = 5 + Math.random() * 95;
-  console.log("New target size:", ball.targetR);
 }
 
 changeSize();
@@ -200,10 +190,41 @@ function drawText() {
   ctx.fillStyle = "white";
   ctx.textAlign = "center";
   ctx.font = "bold 44px sans-serif";
-  ctx.fillText("STAY HERE", canvas.width / 2, 60);
   
+  // Measure text to position icons beside it
+  const titleText = "STAY HERE";
+  const titleWidth = ctx.measureText(titleText).width;
+  const titleX = canvas.width / 2;
+  const titleY = 60;
+  
+  // Draw title
+  ctx.fillText(titleText, titleX, titleY);
+  
+  // Draw like icon to the left of title
+  if (likeIcon.complete) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(likeIcon, titleX - titleWidth/2 - 50, titleY - 35, 35, 35);
+    ctx.restore();
+  }
+  
+  // Draw subscribe icon to the right of title
+  if (subscribeIcon.complete) {
+    ctx.drawImage(subscribeIcon, titleX + titleWidth/2 + 15, titleY - 35, 35, 35);
+  }
+  
+  // Draw subtitle
   ctx.font = "28px sans-serif";
   ctx.fillText("TO RELIVE ANXIETY", canvas.width / 2, 100);
+}
+
+function handleCollision() {
+  // Only change color if enough time has passed since last collision (prevents rapid flickering)
+  const now = Date.now();
+  if (now - ball.lastCollisionTime > 100) { // 100ms cooldown
+    ball.hue += 40;
+    ball.lastCollisionTime = now;
+  }
 }
 
 function loop() {
@@ -235,33 +256,52 @@ function loop() {
   ball.x += ball.vx;
   ball.y += ball.vy;
   
-  // Wall collisions
+  // Wall collisions with better handling
+  let collided = false;
+  
   if (ball.x - ball.r < box.x) {
     ball.x = box.x + ball.r;
-    ball.vx *= -0.95;
-    ball.hue += 40;
+    ball.vx *= -0.85; // More damping to prevent getting stuck
+    collided = true;
   }
   if (ball.x + ball.r > box.x + box.w) {
     ball.x = box.x + box.w - ball.r;
-    ball.vx *= -0.95;
-    ball.hue += 40;
+    ball.vx *= -0.85;
+    collided = true;
   }
   if (ball.y - ball.r < box.y) {
     ball.y = box.y + ball.r;
-    ball.vy *= -0.95;
-    ball.hue += 40;
+    ball.vy *= -0.85;
+    collided = true;
   }
   if (ball.y + ball.r > box.y + box.h) {
     ball.y = box.y + box.h - ball.r;
-    ball.vy *= -0.95;
-    ball.hue += 40;
+    ball.vy *= -0.85;
+    collided = true;
   }
   
-  // Gentle speed creep
-  ball.vx *= 1.001;
-  ball.vy *= 1.001;
-  ball.vx = Math.max(-24, Math.min(24, ball.vx));
-  ball.vy = Math.max(-24, Math.min(24, ball.vy));
+  if (collided) {
+    handleCollision();
+  }
+  
+  // Apply air resistance to prevent runaway speeds
+  ball.vx *= 0.998;
+  ball.vy *= 0.998;
+  
+  // Gentle speed creep (reduced)
+  ball.vx *= 1.0005; // Reduced from 1.001
+  ball.vy *= 1.0005;
+  
+  // Tighter speed limits
+  ball.vx = Math.max(-20, Math.min(20, ball.vx));
+  ball.vy = Math.max(-20, Math.min(20, ball.vy));
+  
+  // If ball gets too slow, give it a little nudge to keep it interesting
+  const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+  if (speed < 2) {
+    ball.vx += (Math.random() - 0.5) * 4;
+    ball.vy += (Math.random() - 0.5) * 4;
+  }
   
   // Glow
   ctx.shadowBlur = 30;
